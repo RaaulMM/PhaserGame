@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>index</title>
+    <meta charset="utf-8">
+    <style>* { padding: 0; margin: 0; }</style>
+    <script src="js/phaser.min.js"></script>
+    <script src="js/phaser.min2.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+    
+var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'preload', { preload: preload, create: create, update: update, render: render });
+function preload() {
+
+
+    game.load.video('chrome', 'crome.webm');
+
+}
+
+var video;
+var sprite;
+var num = 0;
+
+function create() {
+    
+    game.stage.backgroundColor = '#232323';
+
+    video = game.add.video('chrome');
+
+ 
+    sprite = video.addToWorld(game.world.centerX, game.world.centerY, 0.5, 0.5, 1.25, 2);
+
+    video.play(true);
+
+    game.input.onDown.add(pause, this);
+    
+
+}
+function update(){
+    if(video.currentTime > 14){
+         location.href ="http://localhost:90/phaser/ultimoPrueba/ultimo.html";
+        
+    }else{
+       
+    }
+}
+
+
+function pause() {
+
+    video.paused = (video.paused) ? false : true;
+
+}
+
+function render() {
+
+    game.debug.text("Progress: " + Math.round(video.progress * 100) + "%", 32, 590);
+
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Gamedev</title>
+    <style>
+		{ padding: 0; margin: 0; }
+	</style>
+    
+    <script src="js/phaser.min2.js"></script>
+    
+</head>
+<body>
+<script>
+var game = new Phaser.Game(800, 600, Phaser.auto, 'ultimo', { preload: preload, create: create, update: update, render: render });
+
+function preload() {
+	game.load.audio('backaudio', 'assest/audio.mp3');
+	game.load.image("background", "assest/back2.png");
+    game.load.image('arrow', 'assest/SHIP1.png');
+    game.load.image('bullet', 'assest/BALAJ.png');
+    game.load.image('sonic', 'assest/invader1.png');
+    game.load.image('boss', 'assest/boss.png'); 
+}
+
+var sprite;
+var bullets;
+var boss;
+var GefeFinal= 0;
+var fireRate = 100;
+var fireRateBoss = 1500;
+var nextFire = 0;
+var nextFireBoss = 0;
+var enemies;
+var point = 0;
+var vel = 900;
+var vida = 4;
+var enemigos=0;
+var nivel = 1;
+var go =0;
+var vidaBoss = 60;
+
+function create() {
+	var music = this.sound.add('backaudio');
+	music.play();
+	game.add.tileSprite(0, 0, 800, 600, 'background');
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+
+    game.stage.backgroundColor = '#313131';
+//Creamos bullets
+    bullets = game.add.group();
+    bullets.enableBody = true;
+    bullets.physicsBodyType = Phaser.Physics.ARCADE;
+
+    bullets.createMultiple( 50, 'bullet');
+    bullets.setAll('checkWorldBounds', true);
+    bullets.setAll('outOfBoundsKill', true);
+ 
+ //Creamos PLAYER
+    sprite = game.add.sprite(400, 300, 'arrow');
+    sprite.anchor.set(0.5);
+    sprite.enableBody = true;
+
+
+    game.physics.enable(sprite, Phaser.Physics.ARCADE);
+
+    sprite.body.allowRotation = false;
+
+//Creamos Enemigos 
+    enemies = game.add.group();
+    enemies.enableBody = true;
+    Genemi();
+//Creamo BOSS
+    boss = game.add.sprite(32, 70, 'boss');
+    boss.visible = false;
+    game.physics.enable(boss, Phaser.Physics.ARCADE);
+    boss.body.allowGravity = false;
+	boss.body.immovable = true; 
+}
+
+function update() {
+
+   
+    sprite.rotation = game.physics.arcade.angleToPointer(sprite);
+    
+
+    if (game.input.activePointer.isDown)
+    {
+         fire();
+    }
+
+    game.physics.arcade.collide(bullets, enemies, touchingEnemies);
+    enemies.forEach(function (enemi) {game.physics.arcade.moveToObject(enemi, sprite, 0, vel*10)});
+    game.physics.arcade.collide(sprite, enemies, touchingPlayer);
+    game.physics.arcade.collide(bullets, boss, touchingBoss);
+        
+   
+   if (enemigos == 10){
+        nivel = nivel +1;
+        enemigos = 0;
+        Genemi();
+        vel = vel -100;
+        vida = vida +1;
+        
+        bullets.createMultiple( 50, 'bullet');
+        bullets.setAll('checkWorldBounds', true);
+        bullets.setAll('outOfBoundsKill', false);
+        
+    }
+
+    if(nivel == 10){
+        vida = vida +1;
+        enemigos = 11;
+        nivel = nivel +1;
+        vel = 900
+        boss.visible = true;
+        GefeFinal = 1;
+        
+    }
+   if (GefeFinal ==1 ){
+        go = Math.floor(Math.random() * 9) + 1;
+        if (game.time.now > nextFireBoss && go > 5){
+            nextFireBoss = game.time.now + fireRateBoss;
+            enemies.create(boss.x,boss.y, 'sonic');
+        }
+
+    //---------------MOVIMIENTO BOSS------------------------------------------------------------
+    if ((boss.x ==32) && (boss.y == 70)){
+        game.add.tween(boss).to({ y: boss.y + 460 }, 5000, Phaser.Easing.Linear.None, true, 0);
+    }
+    if((boss.y == 530)&&(boss.x ==32)){
+        game.add.tween(boss).to({ x: boss.x + 690 },5000, Phaser.Easing.Linear.None, true, 0);
+    }
+    if((boss.x == 722)&& (boss.y ==530)){
+        game.add.tween(boss).to({ y: boss.y -460 }, 5000, Phaser.Easing.Linear.None, true, 0);
+    }
+    if((boss.y == 70)&&(boss.x ==722)){
+        game.add.tween(boss).to({ x: boss.x + -690 }, 5000, Phaser.Easing.Linear.None, true, 0);
+    }
+    //-------------------------------------------------------------------------------------------
+    }
+    if (vida ==0){
+
+    	var text1 = game.add.text(140, 200, "GAME OVER!", { font: "74px Arial Black", fill: "#C2A8A8" });
+	    text1.stroke = "#F10F0F";
+	    text1.strokeThickness = 8;
+	    game.paused = true;
+    }
+    if (vidaBoss ==0){
+
+    	var text1 = game.add.text(300, 200, "WIN", { font: "74px Arial Black", fill: "#C2A8A8" });
+	    text1.stroke = "#F10F0F";
+	    text1.strokeThickness = 8;
+	    game.paused = true;
+    }
+}   
+   
+  
+
+
+function Genemi() {  
+    for (var i = 0; i < 10; i++)
+    {
+        //  Create a new sprite at a random world location
+        enemies.create(game.world.randomX, game.world.randomY, 'sonic');
+    }
+}
+
+function fire() {
+
+    if (game.time.now > nextFire && bullets.countDead() > 0)
+    {
+        nextFire = game.time.now + fireRate;
+        var bullet = bullets.getFirstDead();
+        bullet.reset(sprite.x - 8, sprite.y - 8);
+        game.physics.arcade.moveToPointer(bullet, 300);
+    }
+
+}
+
+function touchingEnemies(bullet, enemies)
+{
+    enemies.kill(this);
+    enemigos=enemigos+1;
+    bullet.kill(this);
+    point=point+1;  
+}
+function touchingBoss(boss,  bullet)
+{ 
+    boss.x = boss.x;
+    boss.y = boss.y;
+    bullet.kill(this);
+    point=point+1;
+    vidaBoss = vidaBoss-1;
+}
+function touchingPlayer(sprite, enemies)
+{
+    enemies.destroy(this);
+    enemigos=enemigos+1;
+    vida= vida-1;
+    game.physics.arcade.moveToXY(sprite,400,300,0,0);
+}
+
+function render() {
+     game.debug.text("Nivel: " + nivel, 32, 40);
+     game.debug.text("Puntos: " + point, 32, 20);
+     game.debug.text("Vidas: " + vida,650, 20);
+     game.debug.text("enemigos: " + enemigos, 650, 40);
+     game.debug.text("Vida Boss: " + vidaBoss, 650, 60);
+}
+</script>
+</body>
+</html>
